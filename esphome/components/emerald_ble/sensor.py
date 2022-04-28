@@ -13,7 +13,7 @@ from esphome.const import (
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
     UNIT_KILOWATT_HOURS,
-    UNIT_WATT_HOURS,
+    UNIT_WATT,
     UNIT_PERCENT,
 )
 
@@ -40,7 +40,7 @@ CONFIG_SCHEMA = (
             # ),
             cv.Optional(CONF_POWER): sensor.sensor_schema(
                 # unit_of_measurement=UNIT_KILOWATT_HOURS, #used within notification_interval
-                unit_of_measurement=UNIT_WATT_HOURS,
+                unit_of_measurement=UNIT_WATT,
                 accuracy_decimals=5,
                 device_class=DEVICE_CLASS_POWER,
                 state_class=STATE_CLASS_MEASUREMENT,
