@@ -61,7 +61,10 @@ class Emerald : public esphome::ble_client::BLEClientNode, public Component {
   void set_battery(sensor::Sensor *battery) { battery_ = battery; }
   void set_power_sensor(sensor::Sensor *power_sensor) { power_sensor_ = power_sensor; }
   void set_energy_sensor(sensor::Sensor *energy_sensor) { energy_sensor_ = energy_sensor; }
-  void set_pulses_per_kwh(uint16_t pulses_per_kwh) { pulses_per_kwh_ = pulses_per_kwh; }
+  void set_pulses_per_kwh(uint16_t pulses_per_kwh) {
+    pulses_per_kwh_ = pulses_per_kwh;
+    pulse_multiplier_ = (30 / (pulses_per_kwh / 1000));
+  }
   void set_pairing_code(uint32_t pairing_code) { pairing_code_ = pairing_code; }
 
  protected:
@@ -79,6 +82,7 @@ class Emerald : public esphome::ble_client::BLEClientNode, public Component {
 
   uint32_t pairing_code_;
   float pulses_per_kwh_;
+  float pulse_multiplier_;
   uint64_t total_pulses_{0};
 
   uint16_t time_read_char_handle_ = 0x15;
