@@ -39,7 +39,7 @@ static const espbt::ESPBTUUID EMERALD_BATTERY_CHARACTERISTIC_UUID = espbt::ESPBT
 // static std::string setAutoUploadStatusCmd = "0001020b01";
 // static const uint8_t setAutoUploadStatusCmd = "0001020b01";
 //enabled
-static const uint8_t setAutoUploadStatusCmd[] = {0x00,0x01,0x02,0x0b,0x01,0x01};
+static uint8_t setAutoUploadStatusCmd[] = {0x00,0x01,0x02,0x0b,0x01,0x01};
 
 static const uint32_t return30sPowerConsumptionCmd =      0x0001020a06;
 static const uint32_t returnUpdatedPowerCmd =             0x0001020204;
