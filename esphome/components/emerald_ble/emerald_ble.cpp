@@ -73,13 +73,14 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
         uint16_t pulses_within_interval = data[9] << 8;
         pulses_within_interval += + data[10];
 
-        float total_wh_within_interval = pulses_within_interval / (this->pulses_per_kwh_ / 1000.0);
+        // float total_wh_within_interval = pulses_within_interval / (this->pulses_per_kwh_ / 1000.0);
+        float avg_watts_within_interval = pulses_within_interval * this->pulse_multiplier_;
 
-        ESP_LOGI("emerald_ble", "Timestamp: , Pulses: %d, Energy Used: %f Wh", pulses_within_interval,
-                total_wh_within_interval);
+        ESP_LOGI("emerald_ble", "Timestamp: , Pulses: %d, Average Watts within interval: %f W", pulses_within_interval,
+                avg_watts_within_interval);
 
         if (this->power_sensor_ != nullptr) {
-          this->power_sensor_->publish_state(total_wh_within_interval);
+          this->power_sensor_->publish_state(avg_watts_within_interval);
         }
 
         if (this->energy_sensor_ != nullptr) {
