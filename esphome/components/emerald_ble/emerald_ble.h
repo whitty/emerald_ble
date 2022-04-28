@@ -41,12 +41,12 @@ static const espbt::ESPBTUUID EMERALD_BATTERY_CHARACTERISTIC_UUID = espbt::ESPBT
 //enabled
 static uint8_t setAutoUploadStatusCmd[] = {0x00,0x01,0x02,0x0b,0x01,0x01};
 
-static const uint32_t return30sPowerConsumptionCmd =      0x0001020a06;
-static const uint32_t returnUpdatedPowerCmd =             0x0001020204;
-static const uint32_t returnEvery30sPowerConsumptionCmd = 0x000102050e;
-static const uint32_t returnImpulseCmd =                  0x0001010602;
-static const uint32_t returnPairingCodeCmd =              0x0001030206;
-static const uint32_t returnDeviceTimeCmd =               0x0001010304;
+static const uint32_t RETURN30S_POWER_CONSUMPTION_CMD =      0x0001020a06;
+static const uint32_t RETURN_UPDATED_POWER_CMD =             0x0001020204;
+static const uint32_t RETURN_EVERY30S_POWER_CONSUMPTION_CMD = 0x000102050e;
+static const uint32_t RETURN_IMPULSE_CMD =                  0x0001010602;
+static const uint32_t RETURN_PAIRING_CODE_CMD =              0x0001030206;
+static const uint32_t RETURN_DEVICE_TIME_CMD =               0x0001010304;
 
 
 class Emerald : public esphome::ble_client::BLEClientNode, public Component {
