@@ -39,19 +39,19 @@ void Emerald::parse_battery_(const uint8_t *data, uint16_t length) {
 }
 
 uint32_t Emerald::parse_command_header_(const uint8_t *data) {
-    uint32_t commandHeader = 0;
+    uint32_t command_header = 0;
     for (int i = 0;  i < 5; i++) {
-        commandHeader += (data[i] << (8*(4-i)));
+        command_header += (data[i] << (8*(4-i)));
     }
-    return commandHeader;
+    return command_header;
 }
 
 uint32_t Emerald::decode_emerald_date_(const uint8_t *data) {
-    uint32_t commandDateBin = 0;
+    uint32_t command_date_bin = 0;
     for (int i = 5;  i < 9; i++) {
-        commandDateBin += (data[i] << (8*(8-i)));
+        command_date_bin += (data[i] << (8*(8-i)));
     }
-    return commandDateBin;
+    return command_date_bin;
 }
 
 void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
@@ -59,7 +59,7 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
   if (length >= 5) {
     uint32_t command_header = this->parse_command_header_(data);
     switch(command_header) {
-      case return30sPowerConsumptionCmd: {
+      case RETURN30S_POWER_CONSUMPTION_CMD: {
         if (length != 11) {
           //return
         }
@@ -89,19 +89,19 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
         }
         break;
       }
-      case returnUpdatedPowerCmd: {
+      case RETURN_UPDATED_POWER_CMD: {
         break;
       }
-      case returnEvery30sPowerConsumptionCmd: {
+      case RETURN_EVERY30S_POWER_CONSUMPTION_CMD: {
         break;
       }
-      case returnImpulseCmd: {
+      case RETURN_IMPULSE_CMD: {
         break;
       }
-      case returnPairingCodeCmd: {
+      case RETURN_PAIRING_CODE_CMD: {
         break;
       }
-      case returnDeviceTimeCmd: {
+      case RETURN_DEVICE_TIME_CMD: {
         break;
       }
     }
