@@ -14,6 +14,8 @@ void Emerald::dump_config() {
   LOG_SENSOR(" ", "Battery", this->battery_);
   LOG_SENSOR(" ", "Power", this->power_sensor_);
   LOG_SENSOR(" ", "Energy", this->energy_sensor_);
+  ESP_LOGD(TAG, "pulses_per_kwh_: %f", this->pulses_per_kwh_);
+  ESP_LOGD(TAG, "pulse_multiplier_: %f", this->pulse_multiplier_);
 }
 
 // void Emerald::setup() { this->authenticated_ = false; }
@@ -28,11 +30,11 @@ std::string Emerald::pkt_to_hex_(const uint8_t *data, uint16_t len) {
 }
 
 void Emerald::decode_(const uint8_t *data, uint16_t length) {
-  ESP_LOGD("emerald_ble", "DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
+  ESP_LOGD(TAG, "DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
 }
 
 void Emerald::parse_battery_(const uint8_t *data, uint16_t length) {
-  ESP_LOGD("emerald_ble", "Battery: DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
+  ESP_LOGD(TAG, "Battery: DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
   if (length == 1) {
     this->battery_->publish_state(data[0]);
   }
@@ -55,7 +57,7 @@ uint32_t Emerald::decode_emerald_date_(const uint8_t *data) {
 }
 
 void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
-  ESP_LOGD("emerald_ble", "DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
+  ESP_LOGD(TAG, "DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
   if (length >= 5) {
     uint32_t command_header = this->parse_command_header_(data);
     switch(command_header) {
@@ -76,7 +78,7 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
         // float total_wh_within_interval = pulses_within_interval / (this->pulses_per_kwh_ / 1000.0);
         float avg_watts_within_interval = pulses_within_interval * this->pulse_multiplier_;
 
-        ESP_LOGI("emerald_ble", "Timestamp: , Pulses: %d, Average Watts within interval: %f W", pulses_within_interval,
+        ESP_LOGI(TAG, "Timestamp: , Pulses: %d, Average Watts within interval: %f W", pulses_within_interval,
                 avg_watts_within_interval);
 
         if (this->power_sensor_ != nullptr) {
