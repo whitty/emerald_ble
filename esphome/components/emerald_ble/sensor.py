@@ -1,6 +1,6 @@
 import esphome.codegen as cg
 import esphome.config_validation as cv
-from esphome.components import sensor, ble_client
+from esphome.components import sensor, ble_client, time
 from esphome.const import (
     CONF_ID,
     CONF_BATTERY_LEVEL,
@@ -15,9 +15,11 @@ from esphome.const import (
     UNIT_KILOWATT_HOURS,
     UNIT_WATT,
     UNIT_PERCENT,
+    CONF_TIME_ID,
 )
 
 CODEOWNERS = ["@WeekendWarrior1"]
+DEPENDENCIES = ["ble_client"]
 
 emerald_ble_ns = cg.esphome_ns.namespace("emerald_ble")
 Emerald = emerald_ble_ns.class_("Emerald", ble_client.BLEClientNode, cg.Component)
@@ -25,25 +27,24 @@ Emerald = emerald_ble_ns.class_("Emerald", ble_client.BLEClientNode, cg.Componen
 CONF_PAIRING_CODE = "pairing_code"
 CONF_NOTIFICATION_INTERVAL = "notification_interval"
 CONF_PULSES_PER_KWH = "pulses_per_kwh"
+CONF_DAILY_ENERGY = "daily_energy"
 
 CONFIG_SCHEMA = (
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(Emerald),
-            # cv.Required(CONF_POWER): sensor.sensor_schema(
-            #     # unit_of_measurement=UNIT_KILOWATT_HOURS,
-            #     unit_of_measurement=UNIT_KILOWATT,
-            #     accuracy_decimals=5,
-            #     icon=ICON_POWER,
-            #     device_class=DEVICE_CLASS_POWER,
-            #     state_class=STATE_CLASS_MEASUREMENT,
-            # ),
+            cv.Optional(CONF_TIME_ID): cv.use_id(time.RealTimeClock),
             cv.Optional(CONF_POWER): sensor.sensor_schema(
-                # unit_of_measurement=UNIT_KILOWATT_HOURS, #used within notification_interval
                 unit_of_measurement=UNIT_WATT,
                 accuracy_decimals=5,
                 device_class=DEVICE_CLASS_POWER,
                 state_class=STATE_CLASS_MEASUREMENT,
+            ),
+            cv.Optional(CONF_DAILY_ENERGY): sensor.sensor_schema(
+                unit_of_measurement=UNIT_KILOWATT_HOURS,
+                accuracy_decimals=5,
+                device_class=DEVICE_CLASS_ENERGY,
+                state_class=STATE_CLASS_TOTAL_INCREASING,
             ),
             cv.Optional(CONF_ENERGY): sensor.sensor_schema(
                 unit_of_measurement=UNIT_KILOWATT_HOURS,
@@ -71,6 +72,10 @@ async def to_code(config):
     await cg.register_component(var, config)
     await ble_client.register_ble_node(var, config)
 
+    if CONF_TIME_ID in config:
+        time_ = await cg.get_variable(config[CONF_TIME_ID])
+        cg.add(var.set_time(time_))
+
     if CONF_POWER in config:
         sens = await sensor.new_sensor(config[CONF_POWER])
         cg.add(var.set_power_sensor(sens))
@@ -78,6 +83,10 @@ async def to_code(config):
     if CONF_ENERGY in config:
         sens = await sensor.new_sensor(config[CONF_ENERGY])
         cg.add(var.set_energy_sensor(sens))
+
+    if CONF_DAILY_ENERGY in config:
+        sens = await sensor.new_sensor(config[CONF_DAILY_ENERGY])
+        cg.add(var.set_daily_energy_sensor(sens))
 
     if CONF_PAIRING_CODE in config:
         cg.add(var.set_pairing_code(config[CONF_PAIRING_CODE]))
