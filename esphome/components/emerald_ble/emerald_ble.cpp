@@ -13,9 +13,13 @@ void Emerald::dump_config() {
   ESP_LOGCONFIG(TAG, "EMERALD");
   LOG_SENSOR(" ", "Battery", this->battery_);
   LOG_SENSOR(" ", "Power", this->power_sensor_);
-  LOG_SENSOR(" ", "Energy", this->energy_sensor_);
+  LOG_SENSOR(" ", "Daily Energy", this->daily_energy_sensor_);
+  LOG_SENSOR(" ", "Total Energy", this->energy_sensor_);
   ESP_LOGD(TAG, "pulses_per_kwh_: %f", this->pulses_per_kwh_);
   ESP_LOGD(TAG, "pulse_multiplier_: %f", this->pulse_multiplier_);
+  if (this->daily_energy_sensor_ != nullptr && !(bool)time_) {
+    ESP_LOGW(TAG, "Warning: Using daily_energy without a time_id means relying on your Emerald Electricity Advisor's RTC for packet times, which is not recommended. Please consider adding a time component to your ESPHome yaml, and it's time_id to your emerald_ble component.");
+  }
 }
 
 // void Emerald::setup() { this->authenticated_ = false; }
@@ -53,6 +57,13 @@ uint32_t Emerald::decode_emerald_date_(const uint8_t *data) {
     for (int i = 5;  i < 9; i++) {
         command_date_bin += (data[i] << (8*(8-i)));
     }
+    // // (6 bits)year + (4 bits)month + (5 bits)days + (5 bits)hours(locale adjusted) + (6 bits)minutes + (6 bits)seconds
+    // uint16_t year = 2000 + (commandDateBin >> 26);  // need to add 2000 to get the correct year
+    // uint8_t month = ((commandDateBin >> 22) & 0b1111);  // month number between 1 - 12
+    // uint8_t days = ((commandDateBin >> 17) & 0b11111); // 1-31
+    // uint8_t hours = ((commandDateBin >> 12) & 0b11111); // 0-23
+    // uint8_t minutes = ((commandDateBin >> 6) & 0b111111); // 0 -59
+    // uint8_t seconds = commandDateBin & 0b111111; // 0 -59
     return command_date_bin;
 }
 
@@ -65,7 +76,6 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
         if (length != 11) {
           //return
         }
-        // uint32_t commandDateBin = this->decode_emerald_date_(pData);
         // // get power used
         // uint16_t msb = pData[length - 2] << 8;
         // uint16_t total_pulses = msb + pData[length - 1];
@@ -90,6 +100,43 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
           float energy = total_pulses_ / this->pulses_per_kwh_;
           this->energy_sensor_->publish_state(energy);
         }
+
+        if (this->daily_energy_sensor_ != nullptr) {
+          // even if new day, publish last measurement window before resetting
+          this->daily_pulses_ += pulses_within_interval;
+          float energy = this->daily_pulses_ / this->pulses_per_kwh_;
+          this->daily_energy_sensor_->publish_state(energy);
+
+
+          // if esphome device has a valid time component set up, use that (preferred)
+          // else, use the emerald measurement timestamps
+#ifdef USE_TIME
+          auto *time_ = *this->time_;
+          time::ESPTime date_of_measurement = time_->now();
+          // time::ESPTime date_of_measurement = this->time_->now();
+          if (date_of_measurement.is_valid()) {
+            if (this->day_of_last_measurement_ == 0) { this->day_of_last_measurement_ = date_of_measurement.day_of_year; }
+            else if (this->day_of_last_measurement_ != date_of_measurement.day_of_year) {
+              this->daily_pulses_ = 0;
+              this->day_of_last_measurement_ = date_of_measurement.day_of_year;
+            }
+          } else {
+            // if !date_of_measurement.is_valid(), user may have a bare "time:" in their yaml without a specific platform selected, so fallback to date of emerald measurement
+#else
+            // avoid using ESPTime here so we don't need a time component in the config
+            uint32_t command_date_bin = this->decode_emerald_date_(data);
+            uint8_t day_of_measurement = ((command_date_bin >> 17) & 0b11111); // 1-31
+            if (this->day_of_last_measurement_ == 0) { this->day_of_last_measurement_ = day_of_measurement; }
+            else if (this->day_of_last_measurement_ != day_of_measurement) {
+              this->daily_pulses_ = 0;
+              this->day_of_last_measurement_ = day_of_measurement;
+            }
+#endif
+#ifdef USE_TIME
+          }
+#endif
+        }
+
         break;
       }
       case RETURN_UPDATED_POWER_CMD: {
@@ -123,7 +170,7 @@ void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gatt
       break;
     }
     case ESP_GATTC_READ_CHAR_EVT: {
-      ESP_LOGE(TAG, "[%s] ESP_GATTC_READ_CHAR_EVT (Received READ)", this->parent_->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] ESP_GATTC_READ_CHAR_EVT (Received READ)", this->parent_->address_str().c_str());
       if (param->read.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "Error reading char at handle %d, status=%d", param->read.handle, param->read.status);
         break;
@@ -147,7 +194,7 @@ void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gatt
     }
 
     case ESP_GATTC_WRITE_CHAR_EVT: {
-      ESP_LOGE(TAG, "[%s] ESP_GATTC_WRITE_CHAR_EVT (Write confirmed)", this->parent_->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] ESP_GATTC_WRITE_CHAR_EVT (Write confirmed)", this->parent_->address_str().c_str());
       if (param->write.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "Error writing value to char at handle %d, status=%d", param->write.handle, param->write.status);
         break;
@@ -159,7 +206,7 @@ void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gatt
     }  // ESP_GATTC_WRITE_CHAR_EVT
 
     case ESP_GATTC_NOTIFY_EVT: {
-      ESP_LOGE(TAG, "[%s] Received Notification", this->parent_->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] Received Notification", this->parent_->address_str().c_str());
 
 
       // time_read_char_handle_
