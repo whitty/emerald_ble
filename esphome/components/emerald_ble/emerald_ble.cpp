@@ -17,9 +17,9 @@ void Emerald::dump_config() {
   LOG_SENSOR(" ", "Total Energy", this->energy_sensor_);
   ESP_LOGD(TAG, "pulses_per_kwh_: %f", this->pulses_per_kwh_);
   ESP_LOGD(TAG, "pulse_multiplier_: %f", this->pulse_multiplier_);
-  if (this->daily_energy_sensor_ != nullptr && !(bool)time_) {
-    ESP_LOGW(TAG, "Warning: Using daily_energy without a time_id means relying on your Emerald Electricity Advisor's RTC for packet times, which is not recommended. Please consider adding a time component to your ESPHome yaml, and it's time_id to your emerald_ble component.");
-  }
+  // if (this->daily_energy_sensor_ != nullptr && !(bool)this->time_) {
+  //   ESP_LOGW(TAG, "Warning: Using daily_energy without a time_id means relying on your Emerald Electricity Advisor's RTC for packet times, which is not recommended. Please consider adding a time component to your ESPHome yaml, and it's time_id to your emerald_ble component.");
+  // }
 }
 
 // void Emerald::setup() { this->authenticated_ = false; }
