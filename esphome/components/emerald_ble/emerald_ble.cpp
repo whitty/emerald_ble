@@ -17,9 +17,6 @@ void Emerald::dump_config() {
   LOG_SENSOR(" ", "Total Energy", this->energy_sensor_);
   ESP_LOGD(TAG, "pulses_per_kwh_: %f", this->pulses_per_kwh_);
   ESP_LOGD(TAG, "pulse_multiplier_: %f", this->pulse_multiplier_);
-  // if (this->daily_energy_sensor_ != nullptr && !(bool)this->time_) {
-  //   ESP_LOGW(TAG, "Warning: Using daily_energy without a time_id means relying on your Emerald Electricity Advisor's RTC for packet times, which is not recommended. Please consider adding a time component to your ESPHome yaml, and it's time_id to your emerald_ble component.");
-  // }
 }
 
 // void Emerald::setup() { this->authenticated_ = false; }
@@ -76,16 +73,10 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
         if (length != 11) {
           //return
         }
-        // // get power used
-        // uint16_t msb = pData[length - 2] << 8;
-        // uint16_t total_pulses = msb + pData[length - 1];
-        // float total_kw = total_pulses * pulse_multiplier;
-
 
         uint16_t pulses_within_interval = data[9] << 8;
         pulses_within_interval += + data[10];
 
-        // float total_wh_within_interval = pulses_within_interval / (this->pulses_per_kwh_ / 1000.0);
         float avg_watts_within_interval = pulses_within_interval * this->pulse_multiplier_;
 
         ESP_LOGI(TAG, "Timestamp: , Pulses: %d, Average Watts within interval: %f W", pulses_within_interval,

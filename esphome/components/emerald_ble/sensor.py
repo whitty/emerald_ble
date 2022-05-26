@@ -1,3 +1,4 @@
+import logging
 import esphome.codegen as cg
 import esphome.config_validation as cv
 from esphome.components import sensor, ble_client, time
@@ -18,6 +19,8 @@ from esphome.const import (
     CONF_TIME_ID,
 )
 
+_LOGGER = logging.getLogger(__name__)
+
 CODEOWNERS = ["@WeekendWarrior1"]
 DEPENDENCIES = ["ble_client"]
 
@@ -29,7 +32,15 @@ CONF_NOTIFICATION_INTERVAL = "notification_interval"
 CONF_PULSES_PER_KWH = "pulses_per_kwh"
 CONF_DAILY_ENERGY = "daily_energy"
 
-CONFIG_SCHEMA = (
+def _validate(config):
+    if CONF_DAILY_ENERGY in config and CONF_TIME_ID not in config:
+        _LOGGER.warning(
+            "Using daily_energy without a time_id means relying on your Emerald Electricity Advisor's RTC for packet times, which is not recommended. "
+            "Please consider adding a time component to your ESPHome yaml, and it's time_id to your emerald_ble component."
+        )
+    return config
+
+CONFIG_SCHEMA = cv.All(
     cv.Schema(
         {
             cv.GenerateID(): cv.declare_id(Emerald),
@@ -63,7 +74,8 @@ CONFIG_SCHEMA = (
         }
     )
     .extend(ble_client.BLE_CLIENT_SCHEMA)
-    .extend(cv.COMPONENT_SCHEMA)
+    .extend(cv.COMPONENT_SCHEMA),
+    _validate,
 )
 
 
