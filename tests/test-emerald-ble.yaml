@@ -62,3 +62,19 @@ sensor:
     pairing_code: 012345
     pulses_per_kwh: 3200
     time_id: homeassistant_time # daily energy still works without a time_id, but recommended to include one to properly handle daylight savings, etc.
+
+# Old versions of this external_component were conflicting with ble_presence
+# due to upstream mismatches
+binary_sensor:
+  - platform: ble_presence
+    mac_address: 11:22:33:44:55:66
+    min_rssi: -75
+    name: "Fitbit"
+    timeout: 120sec
+
+  - platform: ble_presence
+    ibeacon_uuid: "53abcacc-d7e4-44bb-bd8b-4817d6a03461"
+    ibeacon_minor: 1
+    ibeacon_major: 100
+    name: "Phone"
+    timeout: 150sec
