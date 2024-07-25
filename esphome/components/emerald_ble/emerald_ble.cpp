@@ -103,9 +103,7 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
           // if esphome device has a valid time component set up, use that (preferred)
           // else, use the emerald measurement timestamps
 #ifdef USE_TIME
-          auto *time_ = *this->time_;
-          ESPTime date_of_measurement = time_->now();
-          // ESPTime date_of_measurement = this->time_->now();
+          ESPTime date_of_measurement = (this->time_) ? this->time_->now() : ESPTime{};
           if (date_of_measurement.is_valid()) {
             if (this->day_of_last_measurement_ == 0) { this->day_of_last_measurement_ = date_of_measurement.day_of_year; }
             else if (this->day_of_last_measurement_ != date_of_measurement.day_of_year) {
@@ -131,18 +129,10 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
 
         break;
       }
-      case RETURN_UPDATED_POWER_CMD: {
-        break;
-      }
-      case RETURN_EVERY30S_POWER_CONSUMPTION_CMD: {
-        break;
-      }
-      case RETURN_IMPULSE_CMD: {
-        break;
-      }
-      case RETURN_PAIRING_CODE_CMD: {
-        break;
-      }
+      case RETURN_UPDATED_POWER_CMD:
+      case RETURN_EVERY30S_POWER_CONSUMPTION_CMD:
+      case RETURN_IMPULSE_CMD:
+      case RETURN_PAIRING_CODE_CMD:
       case RETURN_DEVICE_TIME_CMD: {
         break;
       }
@@ -155,9 +145,7 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
 void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if,
                                    esp_ble_gattc_cb_param_t *param) {
   switch (event) {
-    case ESP_GATTC_DISCONNECT_EVT: {
-      break;
-    }
+    case ESP_GATTC_DISCONNECT_EVT:
     case ESP_GATTC_SEARCH_CMPL_EVT: {
       break;
     }
@@ -243,8 +231,8 @@ void Emerald::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_par
         // uint8_t set_auto_upload[] = {0x00, 0x01, 0x02, 0x0b, 0x01, 0x01};
         ESP_LOGI(TAG, "[%s] Writing auto upload code to Emerald", this->parent()->address_str().c_str());
         auto write_status = esp_ble_gattc_write_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(),
-                                               this->time_write_size_char_handle_, sizeof(setAutoUploadStatusCmd),
-                                               setAutoUploadStatusCmd, ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
+                                               this->time_write_size_char_handle_, sizeof(SET_AUTO_UPLOAD_STATUS_CMD),
+                                               const_cast<uint8_t*>(SET_AUTO_UPLOAD_STATUS_CMD), ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
         if (write_status) {
           ESP_LOGW(TAG, "Error sending write request for pairing_code, status=%d", write_status);
         }
