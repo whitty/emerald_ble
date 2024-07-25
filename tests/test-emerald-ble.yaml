@@ -35,12 +35,18 @@ captive_portal:
 external_components:
   - source: ../esphome/components
     # requires ble_client and ble_tracker because I had to add some small features to authenticate properly
-    components: [ ble_client, esp32_ble_tracker, emerald_ble ]
+    components: [ esp32_ble, ble_client, esp32_ble_tracker, emerald_ble ]
 
 # optional requirement used with daily energy sensor
 time:
   - platform: homeassistant
     id: homeassistant_time
+
+esp32_ble:
+    io_capability: keyboard_display
+    max_key_size: 16
+    min_key_size: 7
+    auth_req_mode: sc_mitm_bond
 
 esp32_ble_tracker:
 
