@@ -66,6 +66,7 @@ void PulseMeterSensor::loop() {
 
   // If an edge was peeked, repay the debt
   if (this->peeked_edge_ && this->get_->count_ > 0) {
+    ESP_LOGV(TAG, "Repay Edge, @%" PRIu32 " µs, count: %" PRIu32, now, this->get_->count_);
     this->peeked_edge_ = false;
     this->get_->count_--;  // NOLINT(clang-diagnostic-deprecated-volatile)
   }
@@ -73,6 +74,11 @@ void PulseMeterSensor::loop() {
   // If there is an unprocessed edge, and filter_us_ has passed since, count this edge early
   if (this->get_->last_rising_edge_us_ != this->get_->last_detected_edge_us_ &&
       now - this->get_->last_rising_edge_us_ >= this->filter_us_) {
+    ESP_LOGV(TAG,
+             "Peeked Edge, detected: %" PRIu32 " µs, rising: %" PRIu32 "µs, delt: %" PRIu32 "µs, count: %" PRIu32
+             " @%" PRIu32,
+             this->get_->last_detected_edge_us_, this->get_->last_rising_edge_us_,
+             now - this->get_->last_rising_edge_us_, this->get_->count_, now);
     this->peeked_edge_ = true;
     this->get_->last_detected_edge_us_ = this->get_->last_rising_edge_us_;
     this->get_->count_++;  // NOLINT(clang-diagnostic-deprecated-volatile)
@@ -96,8 +102,10 @@ void PulseMeterSensor::loop() {
       case MeterState::RUNNING: {
         uint32_t delta_us = this->get_->last_detected_edge_us_ - this->last_processed_edge_us_;
         float pulse_width_us = delta_us / float(this->get_->count_);
-        ESP_LOGV(TAG, "New pulse, delta: %" PRIu32 " µs, count: %" PRIu32 ", width: %.5f µs", delta_us,
-                 this->get_->count_, pulse_width_us);
+        ESP_LOGV(TAG,
+                 "New pulse, delta: %" PRIu32 " µs, count: %" PRIu32 ", width: %.5f µs, last-detected=%" PRIu32
+                 "µs, @%" PRIu32,
+                 delta_us, this->get_->count_, pulse_width_us, this->get_->last_detected_edge_us_, now);
         this->publish_state((60.0f * 1000000.0f) / pulse_width_us);
       } break;
     }
