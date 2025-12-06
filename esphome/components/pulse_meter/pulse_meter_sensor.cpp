@@ -73,6 +73,7 @@ void PulseMeterSensor::loop() {
 
   // If there is an unprocessed edge, and filter_us_ has passed since, count this edge early
   if (this->get_->last_rising_edge_us_ != this->get_->last_detected_edge_us_ &&
+      this->get_->last_rising_edge_us_ > this->last_processed_edge_us_ &&
       now - this->get_->last_rising_edge_us_ >= this->filter_us_) {
     ESP_LOGV(TAG,
              "Peeked Edge, detected: %" PRIu32 " µs, rising: %" PRIu32 "µs, delt: %" PRIu32 "µs, count: %" PRIu32
