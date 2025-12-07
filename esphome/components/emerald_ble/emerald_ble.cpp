@@ -150,7 +150,7 @@ void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gatt
       break;
     }
     case ESP_GATTC_READ_CHAR_EVT: {
-      ESP_LOGD(TAG, "[%s] ESP_GATTC_READ_CHAR_EVT (Received READ)", this->parent()->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] ESP_GATTC_READ_CHAR_EVT (Received READ)", this->parent()->address_str());
       if (param->read.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "Error reading char at handle %d, status=%d", param->read.handle, param->read.status);
         break;
@@ -174,19 +174,19 @@ void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gatt
     }
 
     case ESP_GATTC_WRITE_CHAR_EVT: {
-      ESP_LOGD(TAG, "[%s] ESP_GATTC_WRITE_CHAR_EVT (Write confirmed)", this->parent()->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] ESP_GATTC_WRITE_CHAR_EVT (Write confirmed)", this->parent()->address_str());
       if (param->write.status != ESP_GATT_OK) {
         ESP_LOGW(TAG, "Error writing value to char at handle %d, status=%d", param->write.handle, param->write.status);
         break;
       }
 
       // ESP_LOGE(TAG, "[%s] Seemed to miss any handle matches, what is the handel?: %d",
-      //          this->parent()->address_str().c_str(), param->write.handle);
+      //          this->parent()->address_str(), param->write.handle);
       break;
     }  // ESP_GATTC_WRITE_CHAR_EVT
 
     case ESP_GATTC_NOTIFY_EVT: {
-      ESP_LOGD(TAG, "[%s] Received Notification", this->parent()->address_str().c_str());
+      ESP_LOGD(TAG, "[%s] Received Notification", this->parent()->address_str());
 
 
       // time_read_char_handle_
@@ -225,11 +225,11 @@ void Emerald::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_par
                                                             this->time_read_char_handle_);
         if (status) {
           ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d",
-                    this->parent()->address_str().c_str(), status);
+                    this->parent()->address_str(), status);
         }
 
         // uint8_t set_auto_upload[] = {0x00, 0x01, 0x02, 0x0b, 0x01, 0x01};
-        ESP_LOGI(TAG, "[%s] Writing auto upload code to Emerald", this->parent()->address_str().c_str());
+        ESP_LOGI(TAG, "[%s] Writing auto upload code to Emerald", this->parent()->address_str());
         auto write_status = esp_ble_gattc_write_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(),
                                                this->time_write_size_char_handle_, sizeof(SET_AUTO_UPLOAD_STATUS_CMD),
                                                const_cast<uint8_t*>(SET_AUTO_UPLOAD_STATUS_CMD), ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
@@ -248,7 +248,7 @@ void Emerald::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_par
             this->parent()->get_gattc_if(), this->parent()->get_remote_bda(), this->battery_char_handle_);
         if (notify_battery_status) {
           ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d",
-                    this->parent()->address_str().c_str(), notify_battery_status);
+                    this->parent()->address_str(), notify_battery_status);
         }
       }
       break;
