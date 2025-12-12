@@ -43,20 +43,19 @@ static const espbt::ESPBTUUID EMERALD_BATTERY_CHARACTERISTIC_UUID = espbt::ESPBT
 // static std::string resetCmd =               "0001010a00";
 // static std::string setAutoUploadStatusCmd = "0001020b01";
 // static const uint8_t setAutoUploadStatusCmd = "0001020b01";
-//enabled
-static const uint8_t SET_AUTO_UPLOAD_STATUS_CMD[] = {0x00,0x01,0x02,0x0b,0x01,0x01};
+// enabled
+static const uint8_t SET_AUTO_UPLOAD_STATUS_CMD[] = {0x00, 0x01, 0x02, 0x0b, 0x01, 0x01};
 
-static const uint32_t RETURN30S_POWER_CONSUMPTION_CMD =      0x0001020a06;
-static const uint32_t RETURN_UPDATED_POWER_CMD =             0x0001020204;
+static const uint32_t RETURN30S_POWER_CONSUMPTION_CMD = 0x0001020a06;
+static const uint32_t RETURN_UPDATED_POWER_CMD = 0x0001020204;
 static const uint32_t RETURN_EVERY30S_POWER_CONSUMPTION_CMD = 0x000102050e;
-static const uint32_t RETURN_IMPULSE_CMD =                  0x0001010602;
-static const uint32_t RETURN_PAIRING_CODE_CMD =              0x0001030206;
-static const uint32_t RETURN_DEVICE_TIME_CMD =               0x0001010304;
+static const uint32_t RETURN_IMPULSE_CMD = 0x0001010602;
+static const uint32_t RETURN_PAIRING_CODE_CMD = 0x0001030206;
+static const uint32_t RETURN_DEVICE_TIME_CMD = 0x0001010304;
 
-static const uint8_t STANDARD_UPDATE_INTERVAL = 30;    // seconds
-static const float KW_TO_W_CONVERSION = 1000.0;    // conversion ratio
+static const uint8_t STANDARD_UPDATE_INTERVAL = 30;  // seconds
+static const float KW_TO_W_CONVERSION = 1000.0;      // conversion ratio
 static const int HR_TO_S_CONVERSION = 3600;
-
 
 class Emerald : public esphome::ble_client::BLEClientNode, public Component {
   // class Emerald : public esphome::ble_client::BLEClientNode, public PollingComponent {
@@ -94,7 +93,7 @@ class Emerald : public esphome::ble_client::BLEClientNode, public Component {
   sensor::Sensor *energy_sensor_{nullptr};
   sensor::Sensor *daily_energy_sensor_{nullptr};
 #ifdef USE_TIME
-  time::RealTimeClock * time_{};
+  time::RealTimeClock *time_{};
 #endif
   uint8_t day_of_last_measurement_{0};
 

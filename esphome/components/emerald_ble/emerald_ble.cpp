@@ -43,45 +43,45 @@ void Emerald::parse_battery_(const uint8_t *data, uint16_t length) {
 }
 
 uint32_t Emerald::parse_command_header_(const uint8_t *data) {
-    uint32_t command_header = 0;
-    for (int i = 0;  i < 5; i++) {
-        command_header += (data[i] << (8*(4-i)));
-    }
-    return command_header;
+  uint32_t command_header = 0;
+  for (int i = 0; i < 5; i++) {
+    command_header += (data[i] << (8 * (4 - i)));
+  }
+  return command_header;
 }
 
 uint32_t Emerald::decode_emerald_date_(const uint8_t *data) {
-    uint32_t command_date_bin = 0;
-    for (int i = 5;  i < 9; i++) {
-        command_date_bin += (data[i] << (8*(8-i)));
-    }
-    // // (6 bits)year + (4 bits)month + (5 bits)days + (5 bits)hours(locale adjusted) + (6 bits)minutes + (6 bits)seconds
-    // uint16_t year = 2000 + (commandDateBin >> 26);  // need to add 2000 to get the correct year
-    // uint8_t month = ((commandDateBin >> 22) & 0b1111);  // month number between 1 - 12
-    // uint8_t days = ((commandDateBin >> 17) & 0b11111); // 1-31
-    // uint8_t hours = ((commandDateBin >> 12) & 0b11111); // 0-23
-    // uint8_t minutes = ((commandDateBin >> 6) & 0b111111); // 0 -59
-    // uint8_t seconds = commandDateBin & 0b111111; // 0 -59
-    return command_date_bin;
+  uint32_t command_date_bin = 0;
+  for (int i = 5; i < 9; i++) {
+    command_date_bin += (data[i] << (8 * (8 - i)));
+  }
+  // // (6 bits)year + (4 bits)month + (5 bits)days + (5 bits)hours(locale adjusted) + (6 bits)minutes + (6 bits)seconds
+  // uint16_t year = 2000 + (commandDateBin >> 26);  // need to add 2000 to get the correct year
+  // uint8_t month = ((commandDateBin >> 22) & 0b1111);  // month number between 1 - 12
+  // uint8_t days = ((commandDateBin >> 17) & 0b11111); // 1-31
+  // uint8_t hours = ((commandDateBin >> 12) & 0b11111); // 0-23
+  // uint8_t minutes = ((commandDateBin >> 6) & 0b111111); // 0 -59
+  // uint8_t seconds = commandDateBin & 0b111111; // 0 -59
+  return command_date_bin;
 }
 
 void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
   ESP_LOGD(TAG, "DEC(%d): 0x%s", length, this->pkt_to_hex_(data, length).c_str());
   if (length >= 5) {
     uint32_t command_header = this->parse_command_header_(data);
-    switch(command_header) {
+    switch (command_header) {
       case RETURN30S_POWER_CONSUMPTION_CMD: {
         if (length != 11) {
-          //return
+          // return
         }
 
         uint16_t pulses_within_interval = data[9] << 8;
-        pulses_within_interval += + data[10];
+        pulses_within_interval += +data[10];
 
         float avg_watts_within_interval = pulses_within_interval * this->pulse_multiplier_;
 
         ESP_LOGI(TAG, "Timestamp: , Pulses: %d, Average Watts within interval: %f W", pulses_within_interval,
-                avg_watts_within_interval);
+                 avg_watts_within_interval);
 
         if (this->power_sensor_ != nullptr) {
           this->power_sensor_->publish_state(avg_watts_within_interval);
@@ -99,28 +99,30 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
           float energy = this->daily_pulses_ / this->pulses_per_kwh_;
           this->daily_energy_sensor_->publish_state(energy);
 
-
           // if esphome device has a valid time component set up, use that (preferred)
           // else, use the emerald measurement timestamps
 #ifdef USE_TIME
           ESPTime date_of_measurement = (this->time_) ? this->time_->now() : ESPTime{};
           if (date_of_measurement.is_valid()) {
-            if (this->day_of_last_measurement_ == 0) { this->day_of_last_measurement_ = date_of_measurement.day_of_year; }
-            else if (this->day_of_last_measurement_ != date_of_measurement.day_of_year) {
+            if (this->day_of_last_measurement_ == 0) {
+              this->day_of_last_measurement_ = date_of_measurement.day_of_year;
+            } else if (this->day_of_last_measurement_ != date_of_measurement.day_of_year) {
               this->daily_pulses_ = 0;
               this->day_of_last_measurement_ = date_of_measurement.day_of_year;
             }
           } else {
-            // if !date_of_measurement.is_valid(), user may have a bare "time:" in their yaml without a specific platform selected, so fallback to date of emerald measurement
+            // if !date_of_measurement.is_valid(), user may have a bare "time:" in their yaml without a specific
+            // platform selected, so fallback to date of emerald measurement
 #else
-            // avoid using ESPTime here so we don't need a time component in the config
-            uint32_t command_date_bin = this->decode_emerald_date_(data);
-            uint8_t day_of_measurement = ((command_date_bin >> 17) & 0b11111); // 1-31
-            if (this->day_of_last_measurement_ == 0) { this->day_of_last_measurement_ = day_of_measurement; }
-            else if (this->day_of_last_measurement_ != day_of_measurement) {
-              this->daily_pulses_ = 0;
-              this->day_of_last_measurement_ = day_of_measurement;
-            }
+          // avoid using ESPTime here so we don't need a time component in the config
+          uint32_t command_date_bin = this->decode_emerald_date_(data);
+          uint8_t day_of_measurement = ((command_date_bin >> 17) & 0b11111);  // 1-31
+          if (this->day_of_last_measurement_ == 0) {
+            this->day_of_last_measurement_ = day_of_measurement;
+          } else if (this->day_of_last_measurement_ != day_of_measurement) {
+            this->daily_pulses_ = 0;
+            this->day_of_last_measurement_ = day_of_measurement;
+          }
 #endif
 #ifdef USE_TIME
           }
@@ -142,8 +144,7 @@ void Emerald::decode_emerald_packet_(const uint8_t *data, uint16_t length) {
   }
 }
 
-void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if,
-                                   esp_ble_gattc_cb_param_t *param) {
+void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gattc_if, esp_ble_gattc_cb_param_t *param) {
   switch (event) {
     case ESP_GATTC_DISCONNECT_EVT:
     case ESP_GATTC_SEARCH_CMPL_EVT: {
@@ -188,7 +189,6 @@ void Emerald::gattc_event_handler(esp_gattc_cb_event_t event, esp_gatt_if_t gatt
     case ESP_GATTC_NOTIFY_EVT: {
       ESP_LOGD(TAG, "[%s] Received Notification", this->parent()->address_str());
 
-
       // time_read_char_handle_
       if (param->notify.handle == this->time_read_char_handle_) {
         ESP_LOGD(TAG, "Recieved time read notification");
@@ -221,25 +221,27 @@ void Emerald::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_par
     // This event is sent once authentication has completed
     case ESP_GAP_BLE_AUTH_CMPL_EVT: {
       if (param->ble_security.auth_cmpl.success) {
-        auto status = esp_ble_gattc_register_for_notify(this->parent()->get_gattc_if(), this->parent()->get_remote_bda(),
-                                                            this->time_read_char_handle_);
+        auto status = esp_ble_gattc_register_for_notify(this->parent()->get_gattc_if(),
+                                                        this->parent()->get_remote_bda(), this->time_read_char_handle_);
         if (status) {
-          ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d",
-                    this->parent()->address_str(), status);
+          ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d", this->parent()->address_str(),
+                   status);
         }
 
         // uint8_t set_auto_upload[] = {0x00, 0x01, 0x02, 0x0b, 0x01, 0x01};
         ESP_LOGI(TAG, "[%s] Writing auto upload code to Emerald", this->parent()->address_str());
-        auto write_status = esp_ble_gattc_write_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(),
-                                               this->time_write_size_char_handle_, sizeof(SET_AUTO_UPLOAD_STATUS_CMD),
-                                               const_cast<uint8_t*>(SET_AUTO_UPLOAD_STATUS_CMD), ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
+        auto write_status = esp_ble_gattc_write_char(
+            this->parent()->get_gattc_if(), this->parent()->get_conn_id(), this->time_write_size_char_handle_,
+            sizeof(SET_AUTO_UPLOAD_STATUS_CMD), const_cast<uint8_t *>(SET_AUTO_UPLOAD_STATUS_CMD),
+            ESP_GATT_WRITE_TYPE_NO_RSP, ESP_GATT_AUTH_REQ_NONE);
         if (write_status) {
           ESP_LOGW(TAG, "Error sending write request for pairing_code, status=%d", write_status);
         }
 
         // read battery
-        auto read_battery_status = esp_ble_gattc_read_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(),
-                                                            this->battery_char_handle_, ESP_GATT_AUTH_REQ_NONE);
+        auto read_battery_status =
+            esp_ble_gattc_read_char(this->parent()->get_gattc_if(), this->parent()->get_conn_id(),
+                                    this->battery_char_handle_, ESP_GATT_AUTH_REQ_NONE);
         if (read_battery_status) {
           ESP_LOGW(TAG, "Error sending read request for battery, status=%d", read_battery_status);
         }
@@ -247,8 +249,8 @@ void Emerald::gap_event_handler(esp_gap_ble_cb_event_t event, esp_ble_gap_cb_par
         auto notify_battery_status = esp_ble_gattc_register_for_notify(
             this->parent()->get_gattc_if(), this->parent()->get_remote_bda(), this->battery_char_handle_);
         if (notify_battery_status) {
-          ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d",
-                    this->parent()->address_str(), notify_battery_status);
+          ESP_LOGW(TAG, "[%s] esp_ble_gattc_register_for_notify failed, status=%d", this->parent()->address_str(),
+                   notify_battery_status);
         }
       }
       break;

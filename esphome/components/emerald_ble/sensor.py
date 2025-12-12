@@ -1,22 +1,23 @@
 import logging
+
 import esphome.codegen as cg
+from esphome.components import ble_client, sensor, time
 import esphome.config_validation as cv
-from esphome.components import sensor, ble_client, time
 from esphome.const import (
-    CONF_ID,
     CONF_BATTERY_LEVEL,
+    CONF_ENERGY,
+    CONF_ID,
+    CONF_POWER,
+    CONF_TIME_ID,
     DEVICE_CLASS_BATTERY,
+    DEVICE_CLASS_ENERGY,
     DEVICE_CLASS_POWER,
     ENTITY_CATEGORY_DIAGNOSTIC,
-    DEVICE_CLASS_ENERGY,
-    CONF_ENERGY,
-    CONF_POWER,
     STATE_CLASS_MEASUREMENT,
     STATE_CLASS_TOTAL_INCREASING,
     UNIT_KILOWATT_HOURS,
-    UNIT_WATT,
     UNIT_PERCENT,
-    CONF_TIME_ID,
+    UNIT_WATT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ CONF_NOTIFICATION_INTERVAL = "notification_interval"
 CONF_PULSES_PER_KWH = "pulses_per_kwh"
 CONF_DAILY_ENERGY = "daily_energy"
 
+
 def _validate(config):
     if CONF_DAILY_ENERGY in config and CONF_TIME_ID not in config:
         _LOGGER.warning(
@@ -39,6 +41,7 @@ def _validate(config):
             "Please consider adding a time component to your ESPHome yaml, and it's time_id to your emerald_ble component."
         )
     return config
+
 
 CONFIG_SCHEMA = cv.All(
     cv.Schema(
