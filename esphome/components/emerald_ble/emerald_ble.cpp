@@ -43,8 +43,8 @@ void Emerald::parse_battery_(const uint8_t *data, uint16_t length) {
 }
 
 uint32_t Emerald::parse_command_header_(const uint8_t *data) {
-  uint32_t command_header = 0;
-  for (int i = 0; i < 5; i++) {
+  uint32_t command_header = data[0];
+  for (unsigned i = 1; i < 5; i++) {
     command_header += (data[i] << (8 * (4 - i)));
   }
   return command_header;
